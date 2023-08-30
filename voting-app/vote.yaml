@@ -1,0 +1,41 @@
+# vote-deployment-and-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote
+  labels:
+    app: vote
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vote
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+        - name: vote
+          image: dockersamples/examplevotingapp_vote
+          ports:
+            - containerPort: 80
+              name: vote
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote-service
+  labels:
+    app: vote
+spec:
+  selector:
+    app: vote
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 80
+      name: vote-service
+  type: NodePort
+  nodePort: 31020

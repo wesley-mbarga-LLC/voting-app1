@@ -1,0 +1,41 @@
+# result-deployment-and-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: result
+  labels:
+    app: result
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: result
+  template:
+    metadata:
+      labels:
+        app: result
+    spec:
+      containers:
+        - name: result
+          image: dockersamples/examplevotingapp_result
+          ports:
+            - containerPort: 80
+              name: result
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: result-service
+  labels:
+    app: result
+spec:
+  selector:
+    app: result
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 80
+      name: result-service
+  type: NodePort
+  nodePort: 31022
