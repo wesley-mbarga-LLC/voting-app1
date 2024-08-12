@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        // Define any environment variables if needed
-        COMPOSE_FILE = 'docker-compose.yml'
+        // Define the path to the Docker Compose file
+        COMPOSE_FILE = 'voting-app/docker-compose.yaml'
     }
 
     stages {
@@ -11,6 +11,13 @@ pipeline {
             steps {
                 // Checkout the code from the Git repository
                 git 'https://github.com/s5wesley/voting-app1.git'
+            }
+        }
+
+        stage('List Workspace Files') {
+            steps {
+                // List files to verify the docker-compose.yaml location
+                sh 'ls -al voting-app'
             }
         }
 
@@ -32,16 +39,16 @@ pipeline {
                     sh 'docker-compose --version'
 
                     // Check for existing containers and decide whether to stop them
-                    def containersExist = sh(script: 'docker-compose ps -q', returnStdout: true).trim()
+                    def containersExist = sh(script: "docker-compose -f ${env.COMPOSE_FILE} ps -q", returnStdout: true).trim()
                     if (containersExist) {
                         echo 'Stopping and removing existing containers and networks'
-                        sh 'docker-compose down'
+                        sh "docker-compose -f ${env.COMPOSE_FILE} down"
                     } else {
                         echo 'No existing containers found. Skipping docker-compose down.'
                     }
 
                     // Build and start the services in detached mode
-                    sh 'docker-compose up --build -d'
+                    sh "docker-compose -f ${env.COMPOSE_FILE} up --build -d"
                 }
             }
         }
@@ -50,7 +57,7 @@ pipeline {
             steps {
                 script {
                     // Optionally, you can add some verification steps to ensure services are running correctly
-                    sh 'docker-compose ps'
+                    sh "docker-compose -f ${env.COMPOSE_FILE} ps"
                 }
             }
         }
@@ -59,7 +66,7 @@ pipeline {
     post {
         always {
             // Clean up Docker containers and networks if needed
-            sh 'docker-compose down'
+            sh "docker-compose -f ${env.COMPOSE_FILE} down"
         }
     }
 }
