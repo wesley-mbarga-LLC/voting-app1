@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define any environment variables if needed
+        COMPOSE_FILE = 'docker-compose.yaml'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from your repository
+                git 'https://github.com/s5wesley/voting-app1.git'
+            }
+        }
+
+        stage('Get External IP Address') {
+            steps {
+                script {
+                    // Retrieve and print the external IP address
+                    def ip = sh(script: 'curl -s ifconfig.io', returnStdout: true).trim()
+                    echo "External IP Address: ${ip}"
+                }
+            }
+        }
+
+        stage('Build and Deploy') {
+            steps {
+                script {
+                    // Ensure Docker is running and Docker Compose is available
+                    sh 'docker --version'
+                    sh 'docker-compose --version'
+
+                    // Stop and remove existing containers and networks
+                    sh 'docker-compose down'
+
+                    // Build and start the services in detached mode
+                    sh 'docker-compose up --build -d'
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    // Optionally, you can add some verification steps to ensure services are running correctly
+                    sh 'docker-compose ps'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up Docker containers and networks if needed
+            sh 'docker-compose down'
+        }
+    }
+}
