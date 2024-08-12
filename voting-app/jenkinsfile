@@ -53,6 +53,16 @@ pipeline {
             }
         }
 
+        stage('Wait for 5 Minutes') {
+            steps {
+                script {
+                    // Wait for 5 minutes (300 seconds)
+                    echo 'Waiting for 5 minutes...'
+                    sleep time: 5, unit: 'MINUTES'
+                }
+            }
+        }
+
         stage('Verify Deployment') {
             steps {
                 script {
