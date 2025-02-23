@@ -15,6 +15,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Ensure the entire repo is checked out
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
@@ -23,6 +25,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y docker-compose
+
+    - name: Verify docker-compose.yaml exists
+      run: ls -l voting-app/  # Check if the file exists
 
     - name: Pull necessary images
       run: |
@@ -34,7 +39,8 @@ jobs:
 
     - name: Start services using Docker Compose
       run: |
-        docker compose -f docker-compose.yml up -d
+        cd voting-app  # Navigate to the correct directory
+        docker compose -f docker-compose.yaml up -d
 
     - name: Verify running containers
       run: docker ps
