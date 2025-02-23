@@ -31,7 +31,7 @@ services:
   vote:
     image: dockersamples/examplevotingapp_vote
     ports:
-      - "5000:80"
+      - "0.0.0.0:5000:80"  # Ensure external access
     environment:
       REDIS_HOST: redis
     deploy:
@@ -42,8 +42,6 @@ services:
 
   worker:
     image: dockersamples/examplevotingapp_worker
-    ports:
-      - "80:80"
     deploy:
       replicas: 1
     networks:
@@ -53,7 +51,7 @@ services:
   result:
     image: dockersamples/examplevotingapp_result
     ports:
-      - "5001:80"
+      - "0.0.0.0:5001:80"  # Ensure external access
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
     deploy:
