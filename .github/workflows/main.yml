@@ -40,9 +40,10 @@ jobs:
           docker-compose up -d  # Start the application in detached mode
 
       - name: Wait for the application to be ready
-        run: |
-          sleep 30  # Wait for a while to ensure the application starts up properly
+        run: sleep 30  # Give the application time to start
 
-      - name: Check application status
-        run: |
-          curl -f http://localhost:5000 || exit 1  # Replace with your application's URL and port
+      - name: Expose application using Ngrok
+        uses: w9jds/ngrok-action@v1.3.0
+        with:
+          ngrok_token: ${{ secrets.NGROK_TOKEN }}
+          port: 5000  # Replace with your app's internal port if different
