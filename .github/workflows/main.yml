@@ -43,7 +43,7 @@ jobs:
         run: sleep 30  # Give the application time to start
 
       - name: Expose application using Ngrok
-        uses: w9jds/ngrok-action@v1.3.0
+        uses: w9jds/ngrok-action@master
         with:
           ngrok_token: ${{ secrets.NGROK_TOKEN }}
           port: 5000  # Replace with your app's internal port if different
