@@ -1,5 +1,3 @@
-name: CI/CD Workflow for Docker Compose
-
 on:
   push:
     branches:
@@ -11,39 +9,40 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Ensure the entire repo is checked out
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure the entire repo is checked out
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-    - name: Install Docker Compose
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y docker-compose
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
 
-    - name: Verify docker-compose.yaml exists
-      run: ls -l voting-app/  # Check if the file exists
+      - name: Verify docker-compose.yaml exists
+        run: ls -l voting-app/  # Check if the file exists
 
-    - name: Pull necessary images
-      run: |
-        docker pull postgres:alpine
-        docker pull redis:alpine
-        docker pull dockersamples/examplevotingapp_vote
-        docker pull dockersamples/examplevotingapp_worker
-        docker pull dockersamples/examplevotingapp_result
+      - name: Pull necessary images
+        run: |
+          docker pull postgres:alpine
+          docker pull redis:alpine
+          docker pull dockersamples/examplevotingapp_vote
+          docker pull dockersamples/examplevotingapp_worker
+          docker pull dockersamples/examplevotingapp_result
 
-    - name: Start services using Docker Compose
-      run: |
-        cd voting-app  # Navigate to the correct directory
-        docker compose -f docker-compose.yaml up -d
+      - name: Build and run the application
+        run: |
+          cd voting-app  # Navigate to the directory containing the docker-compose.yaml
+          docker-compose up -d  # Start the application in detached mode
 
-    - name: Verify running containers
-      run: docker ps
+      - name: Wait for the application to be ready
+        run: |
+          sleep 30  # Wait for a while to ensure the application starts up properly
 
-    - name: Display Server IP
-      run: curl ifconfig.io
+      - name: Check application status
+        run: |
+          curl -f http://localhost:80 || exit 1  # Replace with your application's URL and port
