@@ -45,4 +45,4 @@ jobs:
 
       - name: Check application status
         run: |
-          curl -f http://localhost:80 || exit 1  # Replace with your application's URL and port
+          curl -f http://localhost:5000 || exit 1  # Replace with your application's URL and port
