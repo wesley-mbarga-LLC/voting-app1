@@ -54,10 +54,9 @@ jobs:
 
       - name: Start Ngrok tunnels for ports 5000 and 5001
         run: |
-          # Start tunnel for port 5000; web API on 127.0.0.1:4040
-          nohup ngrok http 5000 --web-addr=127.0.0.1:4040 > ngrok5000.log 2>&1 &
-          # Start tunnel for port 5001; web API on 127.0.0.1:4041
-          nohup ngrok http 5001 --web-addr=127.0.0.1:4041 > ngrok5001.log 2>&1 &
+          # Set NGROK_WEB_ADDR using environment variable to specify the web interface for each instance.
+          nohup env NGROK_WEB_ADDR=127.0.0.1:4040 ngrok http 5000 > ngrok5000.log 2>&1 &
+          nohup env NGROK_WEB_ADDR=127.0.0.1:4041 ngrok http 5001 > ngrok5001.log 2>&1 &
           sleep 10  # Allow time for Ngrok to establish tunnels
           echo "Ngrok tunnel for port 5000 started. Log snippet:"
           head -n 10 ngrok5000.log
