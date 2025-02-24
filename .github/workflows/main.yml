@@ -18,10 +18,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Install Docker Compose
+      - name: Install required packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y docker-compose
+          sudo apt-get install -y docker-compose unzip wget jq
 
       - name: Verify docker-compose.yaml exists
         run: ls -l voting-app/  # Check if the file exists
@@ -42,8 +42,23 @@ jobs:
       - name: Wait for the application to be ready
         run: sleep 30  # Give the application time to start
 
-      - name: Expose application using Ngrok
-        uses: w9jds/ngrok-action@master
-        with:
-          ngrok_token: ${{ secrets.NGROK_TOKEN }}
-          port: 5000  # Replace with your app's internal port if different
+      - name: Install Ngrok
+        run: |
+          wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+          unzip ngrok-stable-linux-amd64.zip
+          sudo mv ngrok /usr/local/bin/
+
+      - name: Setup Ngrok authtoken
+        run: ngrok authtoken ${{ secrets.NGROK_TOKEN }}
+
+      - name: Start Ngrok tunnel
+        run: |
+          nohup ngrok http 5000 > ngrok.log 2>&1 &
+          sleep 10  # Allow time for Ngrok to establish the tunnel
+          echo "Ngrok tunnel started. Log snippet:"
+          head -n 10 ngrok.log
+
+      - name: Display public URL
+        run: |
+          echo "Fetching Ngrok public URL..."
+          curl --silent http://127.0.0.1:4040/api/tunnels | jq
