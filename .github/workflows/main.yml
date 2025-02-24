@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Ensure the entire repo is checked out
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -24,7 +24,7 @@ jobs:
           sudo apt-get install -y docker-compose unzip wget jq
 
       - name: Verify docker-compose.yaml exists
-        run: ls -l voting-app/
+        run: ls -l voting-app/  # Adjust the path as needed
 
       - name: Pull necessary images
         run: |
@@ -36,11 +36,11 @@ jobs:
 
       - name: Build and run the application
         run: |
-          cd voting-app
-          docker-compose up -d
+          cd voting-app  # Adjust if needed
+          docker-compose up -d  # Start your services (assumed to expose ports 5000 and 5001)
 
       - name: Wait for the application to be ready
-        run: sleep 30
+        run: sleep 30  # Give time for services to start
 
       - name: Install Ngrok (latest version)
         run: |
@@ -52,18 +52,24 @@ jobs:
       - name: Setup Ngrok authtoken
         run: ngrok authtoken ${{ secrets.NGROK_TOKEN }}
 
-      - name: Start Ngrok tunnel
+      - name: Start Ngrok tunnels for ports 5000 and 5001
         run: |
-          nohup ngrok http 5000 > ngrok.log 2>&1 &
-          sleep 10
-          echo "Ngrok tunnel started. Log snippet:"
-          head -n 10 ngrok.log
+          # Start tunnel for port 5000; web API on 127.0.0.1:4040
+          nohup ngrok http 5000 --web-addr=127.0.0.1:4040 > ngrok5000.log 2>&1 &
+          # Start tunnel for port 5001; web API on 127.0.0.1:4041
+          nohup ngrok http 5001 --web-addr=127.0.0.1:4041 > ngrok5001.log 2>&1 &
+          sleep 10  # Allow time for Ngrok to establish tunnels
+          echo "Ngrok tunnel for port 5000 started. Log snippet:"
+          head -n 10 ngrok5000.log
+          echo "Ngrok tunnel for port 5001 started. Log snippet:"
+          head -n 10 ngrok5001.log
 
-      - name: Display public URL
+      - name: Display public URLs for both tunnels
         run: |
-          echo "Fetching Ngrok public URL..."
+          echo "Fetching Ngrok public URL for port 5000..."
           curl --silent http://127.0.0.1:4040/api/tunnels | jq
+          echo "Fetching Ngrok public URL for port 5001..."
+          curl --silent http://127.0.0.1:4041/api/tunnels | jq
 
-      # Debug step: keep the runner alive so you can test the URL while the job is active.
-      - name: Keep tunnel alive for debugging (sleep for 1 hour)
-        run: sleep 3600
+      - name: Keep tunnels alive for debugging (sleep for 6 minutes)
+        run: sleep 360
