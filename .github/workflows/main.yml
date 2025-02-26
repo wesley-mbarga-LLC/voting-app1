@@ -1,3 +1,5 @@
+name: Build and Deploy Voting App
+
 on:
   push:
     branches:
@@ -9,66 +11,58 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure the entire repo is checked out
 
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+
+      - name: Build and push Docker image
+        run: |
+          cd voting-app  # Adjust if needed
+          docker buildx build --platform linux/amd64 -t ghcr.io/${{ github.repository }}/voting-app:latest .
+          docker push ghcr.io/${{ github.repository }}/voting-app:latest
 
       - name: Install required packages
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose unzip wget jq
 
-      - name: Verify docker-compose.yaml exists
-        run: ls -l voting-app/  # Adjust the path as needed
-
       - name: Pull necessary images
         run: |
           docker pull postgres:alpine
           docker pull redis:alpine
-          docker pull dockersamples/examplevotingapp_vote
-          docker pull dockersamples/examplevotingapp_worker
-          docker pull dockersamples/examplevotingapp_result
+          docker pull ghcr.io/${{ github.repository }}/voting-app:latest
 
-      - name: Build and run the application
+      - name: Deploy the Application
         run: |
           cd voting-app  # Adjust if needed
-          docker-compose up -d  # Start your services (assumed to expose ports 5000 and 5001)
+          docker-compose down  # Stop any running instances
+          docker-compose up -d  # Start services
 
       - name: Wait for the application to be ready
-        run: sleep 30  # Give time for services to start
+        run: sleep 30  # Allow services to initialize
 
-      - name: Install Ngrok (latest version)
+      - name: Install and configure Ngrok
         run: |
           wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-linux-amd64.zip -O ngrok.zip
           unzip ngrok.zip
           sudo mv ngrok /usr/local/bin/
-          ngrok version
+          ngrok authtoken ${{ secrets.NGROK_TOKEN }}
 
-      - name: Setup Ngrok authtoken
-        run: ngrok authtoken ${{ secrets.NGROK_TOKEN }}
-
-      - name: Start Ngrok tunnels for ports 5000 and 5001
+      - name: Start Ngrok tunnels
         run: |
-          # Set NGROK_WEB_ADDR using environment variable to specify the web interface for each instance.
-          nohup env NGROK_WEB_ADDR=127.0.0.1:4040 ngrok http 5000 > ngrok5000.log 2>&1 &
-          nohup env NGROK_WEB_ADDR=127.0.0.1:4041 ngrok http 5001 > ngrok5001.log 2>&1 &
-          sleep 10  # Allow time for Ngrok to establish tunnels
-          echo "Ngrok tunnel for port 5000 started. Log snippet:"
-          head -n 10 ngrok5000.log
-          echo "Ngrok tunnel for port 5001 started. Log snippet:"
-          head -n 10 ngrok5001.log
-
-      - name: Display public URLs for both tunnels
-        run: |
-          echo "Fetching Ngrok public URL for port 5000..."
+          nohup ngrok http 5000 --log=stdout > ngrok5000.log 2>&1 &
+          nohup ngrok http 5001 --log=stdout > ngrok5001.log 2>&1 &
+          sleep 10
+          echo "Ngrok tunnel for port 5000:"
           curl --silent http://127.0.0.1:4040/api/tunnels | jq
-          echo "Fetching Ngrok public URL for port 5001..."
+          echo "Ngrok tunnel for port 5001:"
           curl --silent http://127.0.0.1:4041/api/tunnels | jq
-
-      - name: Keep tunnels alive for debugging (sleep for 6 minutes)
-        run: sleep 360
