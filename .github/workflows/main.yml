@@ -24,11 +24,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Verify Dockerfile exists
+        run: |
+          if [ ! -f "voting-app/Dockerfile" ]; then
+            echo "Error: Dockerfile not found in voting-app/"; exit 1;
+          fi
+
       - name: Build and push Docker image
         run: |
           cd voting-app  # Adjust if needed
-          docker buildx build --platform linux/amd64 -t ghcr.io/${{ github.repository }}/voting-app:latest .
-          docker push ghcr.io/${{ github.repository }}/voting-app:latest
+          docker buildx build --platform linux/amd64 -t ghcr.io/${{ github.repository }}/voting-app:latest --file Dockerfile --push .
 
       - name: Install required packages
         run: |
