@@ -1,0 +1,51 @@
+name: CI - Voting App with Docker Compose
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  compose-test:
+    runs-on: [self-hosted, build, deploy, testing]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Start Docker Compose stack
+        run: |
+          docker-compose -f docker-compose.yaml up -d
+        working-directory: ./voting-app
+
+      - name: Wait for services to stabilize
+        run: sleep 20
+
+      - name: Check running containers
+        run: docker ps
+
+      - name: Health check - Vote service
+        run: curl --fail http://localhost:5000 || (echo "Vote service is not responding" && exit 1)
+
+      - name: Health check - Result service
+        run: curl --fail http://localhost:5001 || (echo "Result service is not responding" && exit 1)
+
+      - name: Keep app running for 5 minutes
+        run: |
+          echo "✅ App is now live and accessible at:"
+          echo "🌐 http://<YOUR-VM-IP>:5000 (Vote UI)"
+          echo "🌐 http://<YOUR-VM-IP>:5001 (Result UI)"
+          echo "⌛ Keeping it live for 5 minutes..."
+          sleep 300  # 5 minutes
+          
+      - name: Tear down Docker Compose stack
+        if: always()
+        run: docker-compose -f docker-compose.yaml down -v
+        working-directory: ./voting-app
+
