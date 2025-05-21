@@ -14,14 +14,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
-
       - name: Start Docker Compose stack
         run: |
-          docker-compose -f docker-compose.yaml up -d
+          docker compose -f docker-compose.yaml up -d
         working-directory: ./voting-app
 
       - name: Wait for services to stabilize
@@ -39,13 +34,12 @@ jobs:
       - name: Keep app running for 5 minutes
         run: |
           echo "✅ App is now live and accessible at:"
-          echo "🌐 http://<YOUR-VM-IP>:5000 (Vote UI)"
-          echo "🌐 http://<YOUR-VM-IP>:5001 (Result UI)"
+          echo "🌐 http://34.57.245.130:5000 (Vote UI)"
+          echo "🌐 http://34.57.245.130:5001 (Result UI)"
           echo "⌛ Keeping it live for 5 minutes..."
-          sleep 300  # 5 minutes
-          
+          sleep 300
+
       - name: Tear down Docker Compose stack
         if: always()
-        run: docker-compose -f docker-compose.yaml down -v
+        run: docker compose -f docker-compose.yaml down -v
         working-directory: ./voting-app
-
