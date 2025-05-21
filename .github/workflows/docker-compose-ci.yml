@@ -14,6 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Pre-cleanup - Stop any previously running containers
+        run: |
+          docker compose -f docker-compose.yaml down -v || echo "Nothing to stop"
+        working-directory: ./voting-app
+
       - name: Start Docker Compose stack
         run: |
           docker compose -f docker-compose.yaml up -d
@@ -34,8 +39,8 @@ jobs:
       - name: Keep app running for 5 minutes
         run: |
           echo "✅ App is now live and accessible at:"
-          echo "🌐 http://34.57.245.130:5000 (Vote UI)"
-          echo "🌐 http://34.57.245.130:5001 (Result UI)"
+          echo "🌐 http://34.9.218.139:5000 (Vote UI)"
+          echo "🌐 http://34.9.218.139:5001 (Result UI)"
           echo "⌛ Keeping it live for 5 minutes..."
           sleep 300
 
