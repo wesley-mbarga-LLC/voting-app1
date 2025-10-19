@@ -7,12 +7,24 @@ on:
 
 jobs:
   compose-test:
-    # Allow this job to run on any of your 3 runners
-    runs-on: [self-hosted, build, deploy, test]
+    name: Compose test on ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [build, deploy, test]
+
+    # Run this job on any of your three runners via label
+    runs-on: [self-hosted, ${{ matrix.runner }}]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Show runner info
+        run: |
+          echo "Runner name: ${{ runner.name }}"
+          echo "Runner labels: ${{ runner.labels }}"
+          echo "Runner OS/Arch: ${{ runner.os }} / ${{ runner.arch }}"
 
       - name: Pre-cleanup - Stop any previously running containers
         run: docker compose -f docker-compose.yaml down -v || echo "Nothing to stop"
@@ -28,7 +40,7 @@ jobs:
       - name: Check running containers
         run: docker ps
 
-      - name: Health check - Vote service
+      - name: Health check - Vote service (retries)
         run: |
           for i in {1..10}; do
             if curl --fail --silent http://localhost:5000 > /dev/null; then
@@ -38,7 +50,7 @@ jobs:
           done
           echo "Vote service is not responding"; exit 1
 
-      - name: Health check - Result service
+      - name: Health check - Result service (retries)
         run: |
           for i in {1..10}; do
             if curl --fail --silent http://localhost:5001 > /dev/null; then
