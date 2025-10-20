@@ -1,9 +1,13 @@
-name: CI - Voting App with Docker Compose
+name: "CI - Voting App with Docker Compose"
 
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [master]
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   compose-test:
@@ -13,8 +17,7 @@ jobs:
       matrix:
         runner: [build, deploy, test]
 
-    # Run this job on any of your three runners via label
-    runs-on: [self-hosted, ${{ matrix.runner }}]
+    runs-on: [self-hosted, "${{ matrix.runner }}"]
 
     steps:
       - name: Checkout code
@@ -27,12 +30,12 @@ jobs:
           echo "Runner OS/Arch: ${{ runner.os }} / ${{ runner.arch }}"
 
       - name: Pre-cleanup - Stop any previously running containers
-        run: docker compose -f docker-compose.yaml down -v || echo "Nothing to stop"
         working-directory: ./voting-app
+        run: docker compose -f docker-compose.yaml down -v || echo "Nothing to stop"
 
       - name: Start Docker Compose stack
-        run: docker compose -f docker-compose.yaml up -d
         working-directory: ./voting-app
+        run: docker compose -f docker-compose.yaml up -d
 
       - name: Wait for services to stabilize
         run: sleep 20
@@ -70,5 +73,5 @@ jobs:
 
       - name: Tear down Docker Compose stack
         if: always()
-        run: docker compose -f docker-compose.yaml down -v
         working-directory: ./voting-app
+        run: docker compose -f docker-compose.yaml down -v
