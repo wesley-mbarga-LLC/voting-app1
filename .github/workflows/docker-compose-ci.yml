@@ -12,17 +12,16 @@ defaults:
 jobs:
   compose-test:
     name: Compose test on build runner
-    # If you use a runner group (recommended):
     runs-on:
-      group: Wesley-group-runner     # ← change/remove if you don't use groups
+      group: Wesley-group-runner
       labels:
         - self-hosted
-        - build                      # ← single runner label
+        - build
 
-    # If you DON'T use a runner group, use this instead:
+    # If no group, replace above with:
     # runs-on: [self-hosted, build]
 
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout code
@@ -47,6 +46,19 @@ jobs:
 
       - name: Check running containers
         run: docker ps
+
+      - name: Expose VM Public IP and Ports
+        run: |
+          echo "Detecting external IP..."
+          PUBLIC_IP=$(curl -s ifconfig.me)
+          echo "-----------------------------------"
+          echo "✅ Your application is now running!"
+          echo "🌐 Public IP: $PUBLIC_IP"
+          echo "🔗 Vote service:   http://$PUBLIC_IP:5000"
+          echo "🔗 Result service: http://$PUBLIC_IP:5001"
+          echo "-----------------------------------"
+          echo "Keeping the app live for 5 minutes..."
+          sleep 300
 
       - name: Health check - Vote service (retries)
         run: |
