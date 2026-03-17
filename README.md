@@ -30,5 +30,8 @@ gcloud compute firewall-rules create allow-voting-app-5000-5001 \
   --target-tags=voting-runner \
   --description="Allow external access to Voting App (ports 5000-5001)"
 
+  thanks
+  
+
 
     
